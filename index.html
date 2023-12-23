@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto_Wallet</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Tahoma:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.3.6/dist/web3.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Tahoma', sans-serif;
+            color: green;
+            margin: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            background-color: #FFEBEB;
+        }
+
+        .bd-placeholder-img {
+            font-size: 1.125rem;
+            text-anchor: middle;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            user-select: none;
+        }
+
+        @media (min-width: 768px) {
+            .bd-placeholder-img-lg {
+                font-size: 3.5rem;
+            }
+        }
+
+        #address {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: black;
+        }
+
+        #cryptolist {
+            position: absolute;
+            top: 40px;
+            right: 10px;
+            color: green;
+        }
+
+        th, td {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        td:hover {
+            color: black;
+        }
+
+        #crypto-selector {
+            margin-top: 20px;
+        }
+
+        #selected-crypto, #current-address, #current-balance, #transaction-block {
+            margin-top: 10px;
+        }
+
+        #transaction-block input {
+            margin-bottom: 15px;
+            border: 3px dotted;
+            width: 230px;
+        }
+
+        #cryptolist span {
+            cursor: pointer;
+        }
+
+        #cryptolist span:hover {
+            color: black;
+        }
+
+        #transaction-block button {
+            color: white;
+            background-color: green;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+
+        h2 {
+            margin-right: auto;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h2>Crypto_Wallet</h2>
+
+    <div id="address">
+        <strong style="color: green;">Current Address: </strong><em id="current-address-text"></em>
+    </div>
+
+    <div id="cryptolist">
+        <strong style="margin-right: 20px;">Your Crypto:</strong>
+        <span id="ETH" onclick="updateSelectedCryptoFromList('ETH')">ETH</span>
+        <img src="./assets/Eth-diamond-rainbow.png" width="15" height="20" style="margin-right: 10px;">
+        <span id="BTC" onclick="updateSelectedCryptoFromList('BTC')">BTC</span>
+        <img src="./assets/pngwing.com.png" width="20" height="20" style="margin-right: 10px;">
+        <span id="DOT" onclick="updateSelectedCryptoFromList('DOT')">DOT</span>
+        <img src="./assets/Polkadot-Logo-PNG4.png" width="35" height="20" style="margin-right: 10px;">
+        <span id="ERC20" onclick="updateSelectedCryptoFromList('ERC20')">ERC20</span>
+        <img src="./assets/Eth-diamond-rainbow.png" width="15" height="20" style="margin-right: 10px;">
+    </div>
+
+    <div id="crypto-selector">
+        <label for="cryptos">Choose a cryptocurrency:</label>
+        <select id="cryptos" onchange="updateSelectedCrypto()">
+            <option value="ETH" selected>ETH</option>
+            <option value="BTC">BTC</option>
+            <option value="DOT">DOT</option>
+            <option value="ERC20">ERC20</option>
+        </select>
+    </div>
+
+    <div id="selected-crypto">
+        <label for="crypto-display">Crypto:</label> <span id="crypto-display">ETH</span>
+    </div>
+
+    <div id="current-balance">
+        <label for="balance-display"></label> <span id="balance-display">0 ETH</span>
+    </div>
+
+<div id="balance-display">
+    <label for="balance"></label>
+    <span id="balance"></span>
+    <span id="erc20-balance" style="display: none;">0</span>
+</div>
+
+    <div id="transaction-block">
+        <label for="recipient">Recipient:</label>
+        <input type="text" id="recipient" placeholder="Enter recipient address">
+        <br>
+        <label for="amount">Amount:</label>
+        <input type="text" id="amount" placeholder="Enter amount">
+        <br>
+        <button onclick="sendTransaction()">Send</button>
+    </div>
+
+    <script src="index.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.3.6/dist/web3.min.js"></script>
+    <script src="Erc20lib.js"></script>
+
+    <script>
+        var defaultCrypto = "ETH";
+        var currentAddressElement = document.getElementById("current-address-text");
+currentAddressElement.textContent = await erc20Lib.getAddress();
+async function updateSelectedCrypto() {
+    var selectElement = document.getElementById("cryptos");
+    var selectedCryptoDisplay = document.getElementById("crypto-display");
+    var selectedCryptoSpan = document.getElementById(selectElement.value);
+    var balanceDisplay = document.getElementById("balance");
+    var erc20BalanceDisplay = document.getElementById("erc20-balance");
+
+    selectedCryptoDisplay.textContent = selectElement.value;
+
+    document.querySelectorAll("#cryptolist span").forEach(span => {
+        span.style.color = "green";
+        span.style.fontWeight = "normal";
+    });
+
+    selectedCryptoSpan.style.color = "black";
+    selectedCryptoSpan.style.fontWeight = "bold";
+
+    if (selectElement.value === "ERC20") {
+        try {
+            var erc20Balance = await getErc20Balance();
+            balanceDisplay.textContent = `${erc20Balance} ERC20`;
+            balanceDisplay.style.display = "none";
+            erc20BalanceDisplay.textContent = `${erc20Balance} ERC20`;
+            erc20BalanceDisplay.style.display = "inline";
+        } catch (error) {
+            console.error("Error getting ERC20 balance:", error);
+        }
+    } else {
+        try {
+            var ethBalance = await getEthBalance();
+            balanceDisplay.textContent = `${ethBalance} ETH`;
+            balanceDisplay.style.display = "inline";
+            erc20BalanceDisplay.style.display = "none";
+        } catch (error) {
+            console.error("Error getting ETH balance:", error);
+        }
+    }
+}
+
+    </script>
+
+ <script>
+        // Створіть новий екземпляр Erc20Lib
+        var erc20Lib = new Erc20Lib();
+
+        // Отримайте поточний адрес та встановіть його в елемент
+        async function updateCurrentAddress() {
+            var currentAddressElement = document.getElementById("current-address-text");
+            var currentAddress = await erc20Lib.getAddress();
+            currentAddressElement.textContent = currentAddress;
+        }
+
+        // Викликати функцію при завантаженні сторінки
+        updateCurrentAddress();
+    </script>
+
+</body>
+
+</html>
+
+
+
+
